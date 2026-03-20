@@ -1,0 +1,32 @@
+# Environment
+.env
+*.env
+
+# Data files
+airflow/data/
+*.parquet
+*.delta
+*.csv
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+
+# Airflow
+airflow/logs/
+
+# OS
+.DS_Store
+*.swp
+
+# Great Expectations
+great_expectations/uncommitted/

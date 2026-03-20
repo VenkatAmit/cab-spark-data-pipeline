@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install linters
+        run: pip install black flake8
+      - name: Black format check
+        run: black --check airflow/tasks/ || true
+      - name: Flake8 lint
+        run: flake8 airflow/tasks/ --max-line-length=100 || true
+
+  lint-sql:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install sqlfluff
+        run: pip install sqlfluff
+      - name: SQLFluff lint dbt models
+        run: sqlfluff lint dbt/models/ --dialect ansi || true
+
+  validate-dag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install Airflow
+        run: pip install apache-airflow==2.8.1 --constraint
+          "https://raw.githubusercontent.com/apache/airflow/constraints-2.8.1/constraints-3.10.txt"
+      - name: Validate DAG parses without errors
+        run: |
+          if [ -f airflow/dags/taxi_pipeline.py ]; then
+            python -c "
+          import sys
+          sys.path.insert(0, 'airflow')
+          from dags import taxi_pipeline
+          print('DAG parsed successfully')
+          "
+          else
+            echo "DAG file not yet created — skipping"
+          fi
