@@ -31,7 +31,6 @@ XCom output:
 import os
 import time
 import logging
-from datetime import datetime, timezone
 
 log = logging.getLogger(__name__)
 
@@ -174,8 +173,9 @@ def add_derived_columns(df):
         ).otherwise(None),
     )
 
-    # Pipeline metadata
-    df = df.withColumn("cleaned_at", F.lit(datetime.now(timezone.utc).isoformat()))
+    # Pipeline metadata — use current_timestamp() so Spark writes
+    # a native TimestampType, not a string. Postgres TIMESTAMPTZ requires this.
+    df = df.withColumn("cleaned_at", F.current_timestamp())
 
     return df
 
