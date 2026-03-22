@@ -123,7 +123,20 @@ def apply_cleaning_rules(df):
     df = df.filter((F.col("trip_distance") > 0.01) & (F.col("trip_distance") <= 200))
     log.info(f"After distance filter: {df.count():,} rows")
 
-    # Rule 4: Valid payment type
+    # Rule 4: Valid trip duration (negative = dropoff before pickup, >300 = erroneous)
+    df = df.filter(
+        (F.unix_timestamp("dropoff_datetime") - F.unix_timestamp("pickup_datetime"))
+        / 60
+        > 0
+    )
+    df = df.filter(
+        (F.unix_timestamp("dropoff_datetime") - F.unix_timestamp("pickup_datetime"))
+        / 60
+        <= 300
+    )
+    log.info(f"After duration filter: {df.count():,} rows")
+
+    # Rule 5: Valid payment type
     df = df.filter(F.col("payment_type").isin(list(VALID_PAYMENT_TYPES)))
     log.info(f"After payment_type filter: {df.count():,} rows")
 
