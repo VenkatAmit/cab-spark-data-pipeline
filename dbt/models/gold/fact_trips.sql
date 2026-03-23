@@ -51,7 +51,7 @@ LEFT JOIN date_dim AS d
         || LPAD(EXTRACT(HOUR FROM t.pickup_datetime)::TEXT, 2, '0')
     )::BIGINT = d.date_key
 
-LEFT JOIN zone_dim AS pz ON t.pu_location_id = pz.location_id
-LEFT JOIN zone_dim AS dz ON t.do_location_id = dz.location_id
+LEFT JOIN zone_dim AS pz ON t.pu_location_id = pz.zone_key
+LEFT JOIN zone_dim AS dz ON t.do_location_id = dz.zone_key
 
 LEFT JOIN vendor_dim AS v ON t.vendor_id::TEXT = v.vendor_id
