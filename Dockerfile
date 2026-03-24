@@ -12,6 +12,11 @@ ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 USER airflow
 
+# PostgreSQL JDBC driver for Spark -> pipeline_db writes
+RUN mkdir -p /home/airflow/jars && \
+    curl -L https://jdbc.postgresql.org/download/postgresql-42.7.3.jar \
+         -o /home/airflow/jars/postgresql-42.7.3.jar
+
 RUN pip install --no-cache-dir \
     pyspark==3.4.1 \
     delta-spark==2.4.0 \
@@ -20,11 +25,6 @@ RUN pip install --no-cache-dir \
     sqlalchemy==1.4.52 \
     pandas==1.5.3 \
     pyarrow==14.0.1
-
-# Download PostgreSQL JDBC driver for Spark JDBC writes
-RUN mkdir -p /opt/spark/jars && \
-    curl -L https://jdbc.postgresql.org/download/postgresql-42.7.3.jar \
-         -o /opt/spark/jars/postgresql-42.7.3.jar
 
 RUN python - << 'PYEOF'
 from delta import configure_spark_with_delta_pip
