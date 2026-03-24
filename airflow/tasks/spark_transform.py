@@ -147,8 +147,8 @@ def add_derived_columns(df):
     df = df.withColumnRenamed("tpep_dropoff_datetime", "dropoff_datetime")
     df = df.withColumnRenamed("VendorID", "vendor_id")
     df = df.withColumnRenamed("RatecodeID", "rate_code_id")
-    df = df.withColumnRenamed("PULocationID", "pu_location_id")
-    df = df.withColumnRenamed("DOLocationID", "do_location_id")
+    df = df.withColumnRenamed("PULocationID", "pickup_location_id")
+    df = df.withColumnRenamed("DOLocationID", "dropoff_location_id")
 
     df = df.withColumn(
         "trip_duration_min",
@@ -176,8 +176,8 @@ def add_derived_columns(df):
     )
     df = df.withColumn(
         "is_airport_trip",
-        F.col("pu_location_id").isin(list(AIRPORT_LOCATION_IDS))
-        | F.col("do_location_id").isin(list(AIRPORT_LOCATION_IDS)),
+        F.col("pickup_location_id").isin(list(AIRPORT_LOCATION_IDS))
+        | F.col("dropoff_location_id").isin(list(AIRPORT_LOCATION_IDS)),
     )
     df = df.withColumn(
         "tip_percentage",
@@ -224,30 +224,24 @@ def write_silver(df, trip_month: str, row_count: int):
     df = df.withColumn("trip_month", F.lit(trip_month))
 
     silver_columns = [
-        "vendor_id",
+        "trip_id",
+        "trip_month",
         "pickup_datetime",
         "dropoff_datetime",
         "passenger_count",
         "trip_distance",
-        "rate_code_id",
-        "store_and_fwd_flag",
-        "pu_location_id",
-        "do_location_id",
-        "payment_type",
         "fare_amount",
-        "extra",
-        "mta_tax",
         "tip_amount",
-        "tolls_amount",
-        "improvement_surcharge",
+        "tip_percentage",
         "total_amount",
-        "congestion_surcharge",
-        "airport_fee",
+        "vendor_id",
+        "rate_code_id",
+        "payment_type",
+        "pickup_location_id",
+        "dropoff_location_id",
         "trip_duration_min",
         "speed_mph",
         "is_airport_trip",
-        "tip_percentage",
-        "trip_month",
         "cleaned_at",
     ]
 
