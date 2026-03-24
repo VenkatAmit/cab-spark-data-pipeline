@@ -71,7 +71,7 @@ services:
       - pipeline_db_data:/var/lib/postgresql/data
       - ./sql:/docker-entrypoint-initdb.d:ro
     ports:
-      - "5433:5432"
+       - "127.0.0.1:5433:5432"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${PIPELINE_DB_USER}"]
       interval: 10s

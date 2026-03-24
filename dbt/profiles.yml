@@ -1,21 +1,12 @@
 nyc_taxi:
-  target: dev
+  target: docker
   outputs:
-    dev:
-      type: postgres
-      host: localhost
-      port: 5433
-      user: pipeline
-      password: pipeline123
-      dbname: nyc_taxi
-      schema: public
-      threads: 4
     docker:
       type: postgres
       host: pipeline_db
       port: 5432
-      user: pipeline
-      password: pipeline123
-      dbname: nyc_taxi
+      user: "{{ env_var('PIPELINE_DB_USER') }}"
+      password: "{{ env_var('PIPELINE_DB_PASSWORD') }}"
+      dbname: "{{ env_var('PIPELINE_DB_NAME') }}"
       schema: public
       threads: 4
