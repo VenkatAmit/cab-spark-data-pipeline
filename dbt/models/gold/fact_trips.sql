@@ -49,6 +49,15 @@ SELECT  -- noqa: ST06
         t.pickup_datetime::TEXT || t.dropoff_datetime::TEXT
         || t.pu_location_id::TEXT || t.do_location_id::TEXT
         || t.fare_amount::TEXT || t.tip_amount::TEXT
+        || t.total_amount::TEXT || t.passenger_count::TEXT
+        || ROW_NUMBER() OVER (
+            PARTITION BY
+                t.pickup_datetime,
+                t.pu_location_id,
+                t.fare_amount,
+                t.tip_amount
+            ORDER BY t.dropoff_datetime
+        )::TEXT
     ), 1, 16))::BIT(64)::BIGINT AS trip_key
 
 FROM trips AS t
