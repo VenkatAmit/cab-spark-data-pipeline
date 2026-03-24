@@ -145,14 +145,26 @@ def add_derived_columns(df):
 
     df = df.withColumn(
         "trip_duration_min",
-        (F.unix_timestamp("dropoff_datetime") - F.unix_timestamp("pickup_datetime"))
-        / 60,
+        F.least(
+            F.lit(1440.0),  # cap at 24 hours
+            F.greatest(
+                F.lit(0.0),
+                (
+                    F.unix_timestamp("dropoff_datetime")
+                    - F.unix_timestamp("pickup_datetime")
+                )
+                / 60,
+            ),
+        ),
     )
     df = df.withColumn(
         "speed_mph",
         F.when(
             F.col("trip_duration_min") > 0,
-            F.col("trip_distance") / (F.col("trip_duration_min") / 60),
+            F.least(
+                F.lit(200.0),  # cap at 200 mph
+                F.col("trip_distance") / (F.col("trip_duration_min") / 60),
+            ),
         ).otherwise(None),
     )
     df = df.withColumn(
@@ -163,8 +175,11 @@ def add_derived_columns(df):
     df = df.withColumn(
         "tip_percentage",
         F.when(
-            F.col("fare_amount") > 0,
-            (F.col("tip_amount") / F.col("fare_amount")) * 100,
+            (F.col("fare_amount") > 0) & (F.col("tip_amount") >= 0),
+            F.least(
+                F.lit(9999.99),  # cap at 9999.99% — fits NUMERIC(12,4)
+                (F.col("tip_amount") / F.col("fare_amount")) * 100,
+            ),
         ).otherwise(None),
     )
     df = df.withColumn("cleaned_at", F.current_timestamp())

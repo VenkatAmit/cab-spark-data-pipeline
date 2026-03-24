@@ -105,10 +105,10 @@ CREATE TABLE IF NOT EXISTS cleaned_trips (
     congestion_surcharge    NUMERIC(8, 2),
     airport_fee             NUMERIC(8, 2),
     -- Derived columns added by spark_transform
-    trip_duration_min       NUMERIC(8, 2),
-    speed_mph               NUMERIC(8, 2),
+    trip_duration_min       NUMERIC(10, 4),
+    speed_mph               NUMERIC(10, 4),
     is_airport_trip         BOOLEAN,
-    tip_percentage          NUMERIC(8, 2),
+    tip_percentage          NUMERIC(12, 4),
     -- Pipeline metadata
     trip_month              CHAR(7),
     cleaned_at              TIMESTAMPTZ,
