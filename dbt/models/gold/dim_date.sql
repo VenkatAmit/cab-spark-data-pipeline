@@ -27,6 +27,8 @@ SELECT  -- noqa: ST06
 FROM (
     SELECT DISTINCT DATE_TRUNC('hour', pickup_datetime) AS hour_bucket
     FROM {{ source('silver', 'cleaned_trips') }}
-    WHERE pickup_datetime IS NOT NULL
+    WHERE
+        pickup_datetime IS NOT NULL
+        AND trip_month = '{{ var("trip_month") }}'
 ) AS hours
 ORDER BY date_key

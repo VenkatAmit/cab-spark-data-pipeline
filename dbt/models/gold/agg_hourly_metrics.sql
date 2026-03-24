@@ -14,7 +14,7 @@ SELECT
     pz.service_zone AS pickup_service_zone,
     COUNT(*) AS trip_count,
     ROUND(AVG(f.trip_distance)::NUMERIC, 2) AS avg_distance,
-    ROUND(AVG(f.fare_amount)::NUMERIC, 2) AS avg_fare,
+    ROUND(AVG(f.fare_amount)::NUMERIC, 2) AS avg_fare_amount,
     ROUND(AVG(f.tip_amount)::NUMERIC, 2) AS avg_tip,
     ROUND(AVG(f.tip_pct)::NUMERIC, 2) AS avg_tip_pct,
     ROUND(SUM(f.total_amount)::NUMERIC, 2) AS total_revenue,
