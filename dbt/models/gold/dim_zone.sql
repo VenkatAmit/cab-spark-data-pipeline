@@ -1,11 +1,10 @@
 {{ config(materialized='table') }}
 
 SELECT
-    locationid AS zone_key,
-    locationid AS location_id,
-    TRIM(zone) AS zone_name,
-    TRIM(borough) AS borough,
+    "LocationID" AS zone_key,  -- noqa: RF06
+    TRIM("Zone") AS zone_name,  -- noqa: RF06
+    TRIM("Borough") AS borough,  -- noqa: RF06
     TRIM(service_zone) AS service_zone,
-    TRIM(borough) = 'Manhattan' AS is_manhattan
+    TRIM("Borough") = 'Manhattan' AS is_manhattan  -- noqa: RF06
 FROM {{ ref('taxi_zones') }}
 ORDER BY zone_key

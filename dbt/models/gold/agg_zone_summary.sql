@@ -6,7 +6,7 @@ SELECT
     pz.borough AS pickup_borough,
     pz.service_zone,
     pz.is_manhattan,
-    f.trip_month,
+    TO_CHAR(TO_DATE(f.trip_month, 'YYYY-MM'), 'YYYY-MM') AS trip_month,
     COUNT(*) AS trip_count,
     ROUND(AVG(f.trip_distance)::NUMERIC, 2) AS avg_distance,
     ROUND(AVG(f.fare_amount)::NUMERIC, 2) AS avg_fare,
@@ -23,5 +23,5 @@ GROUP BY
     pz.borough,
     pz.service_zone,
     pz.is_manhattan,
-    f.trip_month
+    TO_CHAR(TO_DATE(f.trip_month, 'YYYY-MM'), 'YYYY-MM')
 ORDER BY trip_count DESC
