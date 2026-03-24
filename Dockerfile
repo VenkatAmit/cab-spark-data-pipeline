@@ -14,7 +14,7 @@ USER airflow
 
 RUN pip install --no-cache-dir \
     pyspark==3.4.1 \
-    delta-spark==2.3.0 \
+    delta-spark==2.4.0 \
     dbt-postgres==1.7.18 \
     great-expectations==0.17.23 \
     sqlalchemy==1.4.52 \
