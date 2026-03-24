@@ -97,6 +97,16 @@ def write_bronze_delta(parquet_path: Path, trip_month: str, run_id: str) -> int:
         df = spark.read.parquet(str(parquet_path))
         log.info(f"Parquet loaded: {len(df.columns)} columns")
 
+        # Cast TimestampNTZ -> Timestamp to avoid Delta schema merge conflict
+        # TLC parquet files switched to TimestampNTZ in 2024
+        from pyspark.sql import functions as F
+        from pyspark.sql.types import TimestampType
+
+        for col_name, dtype in df.dtypes:
+            if dtype == "timestamp_ntz":
+                df = df.withColumn(col_name, F.col(col_name).cast(TimestampType()))
+                log.info(f"Cast {col_name}: timestamp_ntz -> timestamp")
+
         # Add pipeline metadata columns
         from pyspark.sql import functions as F
 
