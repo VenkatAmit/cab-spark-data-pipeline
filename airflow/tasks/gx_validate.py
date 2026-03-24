@@ -165,6 +165,19 @@ def validate_gold(engine) -> Tuple[bool, List[str]]:
     log.info("Validating gold layer (agg_hourly_metrics + agg_zone_summary)...")
     failures = []
 
+    # Check table exists before querying
+    with engine.connect() as conn:
+        result = conn.execute(
+            sqlalchemy.text(
+                "SELECT COUNT(*) FROM information_schema.tables "
+                "WHERE table_schema='public' AND table_name='agg_hourly_metrics'"
+            )
+        )
+        if result.scalar() == 0:
+            failures.append("agg_hourly_metrics table does not exist yet")
+            log.warning("Gold tables not yet created — skipping gold validation")
+            return False, failures
+
     hm_count = get_row_count(engine, "public.agg_hourly_metrics")
     log.info(f"agg_hourly_metrics row count: {hm_count}")
     if not (5_000 <= hm_count <= 6_000):
