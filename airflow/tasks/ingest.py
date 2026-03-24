@@ -71,6 +71,10 @@ def get_spark_session():
         .appName("nyc_taxi_bronze_ingest")
         .config("spark.driver.memory", "2g")
         .config("spark.sql.shuffle.partitions", "8")
+        .config("spark.sql.parquet.datetimeRebaseModeInRead", "CORRECTED")
+        .config("spark.sql.parquet.int96RebaseModeInRead", "CORRECTED")
+        .config("spark.sql.legacy.parquet.nanosAsLong", "false")
+        .config("spark.databricks.delta.schema.autoMerge.enabled", "true")
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config(
             "spark.sql.catalog.spark_catalog",
