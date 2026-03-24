@@ -28,25 +28,19 @@ DELTA_BRONZE_PATH = os.environ.get(
 
 def get_spark_session():
     from pyspark.sql import SparkSession
+    from delta import configure_spark_with_delta_pip
 
-    return (
+    builder = (
         SparkSession.builder.master("local[*]")
         .appName("nyc_taxi_delta_optimize")
         .config("spark.driver.memory", "2g")
-        .config(
-            "spark.jars.packages",
-            "io.delta:delta-core_2.12:2.3.0",
-        )
-        .config(
-            "spark.sql.extensions",
-            "io.delta.sql.DeltaSparkSessionExtension",
-        )
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config(
             "spark.sql.catalog.spark_catalog",
             "org.apache.spark.sql.delta.catalog.DeltaCatalog",
         )
-        .getOrCreate()
     )
+    return configure_spark_with_delta_pip(builder).getOrCreate()
 
 
 def delta_optimize(**context):
@@ -80,8 +74,8 @@ def delta_optimize(**context):
         log.info("VACUUM complete")
 
     finally:
-        spark.stop()
-        log.info("Spark session stopped")
+        spark.catalog.clearCache()
+        log.info("Spark cache cleared")
 
     log.info("delta_optimize complete")
     return True

@@ -65,7 +65,7 @@ def dbt_run(**context):
     if rc != 0:
         raise RuntimeError(f"dbt run failed with exit code {rc}:\n{stderr}")
 
-    models_passed = stdout.count("OK created")
+    models_passed = stdout.count(" OK ")
     log.info(f"dbt run complete — {models_passed} models passed")
 
     # ── dbt test ──────────────────────────────────────────────
@@ -86,7 +86,7 @@ def dbt_run(**context):
     if rc != 0:
         raise RuntimeError(f"dbt test failed with exit code {rc}:\n{stderr}")
 
-    tests_passed = stdout.count("PASS")
+    tests_passed = stdout.count(" PASS ")
     log.info(f"dbt test complete — {tests_passed} tests passed")
 
     duration = round(time.time() - start, 2)
