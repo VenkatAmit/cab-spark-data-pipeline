@@ -1,12 +1,41 @@
-nyc_taxi:
-  target: docker
+# dbt profiles.yml
+#
+# Connection settings are read from environment variables so no
+# credentials are hardcoded. The variable names match PostgresSettings
+# in pipeline/settings.py — a single .env file drives both.
+#
+# For local development:
+#   export POSTGRES_HOST=localhost
+#   export POSTGRES_PORT=5432
+#   export POSTGRES_DB=cab_pipeline
+#   export POSTGRES_USER=postgres
+#   export POSTGRES_PASSWORD=<your password>
+#   dbt run --select silver.*
+#
+# In Docker / CI the same variables are injected from the environment.
+# Do NOT commit this file with hardcoded credentials.
+
+cab_pipeline:
+  target: dev
   outputs:
-    docker:
+    dev:
       type: postgres
-      host: pipeline_db
-      port: 5432
-      user: "{{ env_var('PIPELINE_DB_USER') }}"
-      password: "{{ env_var('PIPELINE_DB_PASSWORD') }}"
-      dbname: "{{ env_var('PIPELINE_DB_NAME') }}"
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'cab_pipeline') }}"
+      user: "{{ env_var('POSTGRES_USER', 'postgres') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
       schema: public
       threads: 4
+      connect_timeout: 10
+
+    prod:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      dbname: "{{ env_var('POSTGRES_DB') }}"
+      user: "{{ env_var('POSTGRES_USER') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
+      schema: public
+      threads: 8
+      connect_timeout: 10

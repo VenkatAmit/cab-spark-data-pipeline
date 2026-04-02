@@ -1,0 +1,116 @@
+version: 2
+
+models:
+  - name: silver_trips
+    description: >
+      Conformed, enriched NYC taxi trip records. Incremental model —
+      appends new partition_date values on each run. Merge strategy
+      on trip_id ensures idempotent re-runs.
+    columns:
+      - name: trip_id
+        description: "Deterministic surrogate key (vendor_id + pickup_datetime + pu_location_id)"
+        tests:
+          - not_null
+          - unique
+
+      - name: vendor_id
+        description: "Taxi vendor identifier"
+
+      - name: pickup_datetime
+        description: "Pickup timestamp"
+        tests:
+          - not_null
+
+      - name: dropoff_datetime
+        description: "Dropoff timestamp"
+        tests:
+          - not_null
+
+      - name: pu_location_id
+        description: "Pickup TLC Taxi Zone ID"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('silver_zones')
+              field: location_id
+
+      - name: do_location_id
+        description: "Dropoff TLC Taxi Zone ID"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('silver_zones')
+              field: location_id
+
+      - name: trip_distance
+        description: "Trip distance in miles (> 0 guaranteed by staging filter)"
+        tests:
+          - not_null
+
+      - name: trip_duration_minutes
+        description: "Duration in minutes derived from pickup/dropoff timestamps"
+
+      - name: fare_amount
+        description: "Metered fare in USD"
+        tests:
+          - not_null
+
+      - name: total_amount
+        description: "Total charge in USD"
+        tests:
+          - not_null
+
+      - name: fare_per_mile
+        description: "fare_amount / trip_distance — null when trip_distance is 0"
+
+      - name: tip_pct
+        description: "tip_amount as a percentage of total_amount"
+
+      - name: has_tip
+        description: "True if tip_amount > 0"
+
+      - name: partition_date
+        description: "Monthly partition date from bronze"
+        tests:
+          - not_null
+
+      - name: transformed_at
+        description: "Timestamp when this row was written by dbt"
+        tests:
+          - not_null
+
+  - name: silver_zones
+    description: >
+      Conformed taxi zone dimension. Full refresh on every dbt run.
+      265 rows — one per TLC Taxi Zone.
+    columns:
+      - name: location_id
+        description: "TLC Taxi Zone ID (primary key)"
+        tests:
+          - not_null
+          - unique
+
+      - name: borough
+        description: "NYC borough"
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - Manhattan
+                - Brooklyn
+                - Queens
+                - Bronx
+                - Staten Island
+                - EWR
+                - Unknown
+
+      - name: service_zone_code
+        description: "Normalised service zone code"
+        tests:
+          - accepted_values:
+              values: [yellow, boro, ewr, unknown]
+
+      - name: is_manhattan
+        description: "True if borough is Manhattan"
+        tests:
+          - not_null

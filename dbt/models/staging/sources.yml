@@ -1,0 +1,63 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: "Raw ingested data in Postgres — written by BronzeIngestor"
+    schema: public
+    tables:
+      - name: raw_trips
+        description: "Raw NYC yellow taxi trip records, partitioned by pickup month"
+        columns:
+          - name: vendor_id
+            description: "Taxi vendor identifier (1 = Creative Mobile, 2 = VeriFone)"
+          - name: pickup_datetime
+            description: "Pickup timestamp"
+            tests:
+              - not_null
+          - name: dropoff_datetime
+            description: "Dropoff timestamp"
+            tests:
+              - not_null
+          - name: passenger_count
+            description: "Number of passengers"
+          - name: trip_distance
+            description: "Trip distance in miles"
+          - name: pu_location_id
+            description: "Pickup TLC Taxi Zone location ID"
+            tests:
+              - not_null
+          - name: do_location_id
+            description: "Dropoff TLC Taxi Zone location ID"
+            tests:
+              - not_null
+          - name: fare_amount
+            description: "Metered fare amount in USD"
+          - name: tip_amount
+            description: "Tip amount in USD"
+          - name: total_amount
+            description: "Total amount charged in USD"
+          - name: partition_date
+            description: "Logical partition date (YYYY-MM-01 for monthly partitions)"
+            tests:
+              - not_null
+          - name: ingested_at
+            description: "Timestamp when the row was written by BronzeIngestor"
+
+      - name: raw_zones
+        description: "NYC TLC Taxi Zone lookup table — full refresh on each ingest"
+        columns:
+          - name: location_id
+            description: "TLC Taxi Zone ID (primary key)"
+            tests:
+              - not_null
+              - unique
+          - name: borough
+            description: "NYC borough name"
+            tests:
+              - not_null
+          - name: zone
+            description: "Zone name within the borough"
+            tests:
+              - not_null
+          - name: service_zone
+            description: "Service zone category (Yellow Zone, Boro Zone, etc.)"
