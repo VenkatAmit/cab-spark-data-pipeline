@@ -138,25 +138,8 @@ def _build_spark_session(settings: SparkSettings) -> SparkSession:
 
 
 @lru_cache(maxsize=1)
-def get_spark(settings: SparkSettings | None = None) -> SparkSession:
-    """Return the singleton SparkSession for this process.
-
-    Parameters
-    ----------
-    settings:
-        SparkSettings instance. Defaults to get_settings().spark.
-        Pass an explicit instance in tests to avoid touching the
-        global settings cache.
-
-    Raises
-    ------
-    ConfigurationError
-        If PySpark is not installed.
-    SparkError
-        If session construction fails.
-    """
-    resolved = settings if settings is not None else get_settings().spark
-    return _build_spark_session(resolved)
+def get_spark() -> SparkSession:
+    return _build_spark_session(get_settings().spark)
 
 
 def stop_spark() -> None:

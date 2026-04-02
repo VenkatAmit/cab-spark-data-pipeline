@@ -21,6 +21,7 @@ from pipeline.settings import (
 class TestPostgresSettings:
     def test_dsn_format(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("POSTGRES_PASSWORD", "secret")
+        monkeypatch.setenv("POSTGRES_DB", "cab_pipeline")
         s = PostgresSettings()
         assert "host=localhost" in s.dsn
         assert "dbname=cab_pipeline" in s.dsn
@@ -28,6 +29,7 @@ class TestPostgresSettings:
 
     def test_jdbc_url_format(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("POSTGRES_PASSWORD", "secret")
+        monkeypatch.setenv("POSTGRES_DB", "cab_pipeline")
         s = PostgresSettings()
         assert s.jdbc_url == "jdbc:postgresql://localhost:5432/cab_pipeline"
 
@@ -41,6 +43,7 @@ class TestPostgresSettings:
         monkeypatch.setenv("POSTGRES_HOST", "db.internal")
         monkeypatch.setenv("POSTGRES_PORT", "5433")
         monkeypatch.setenv("POSTGRES_PASSWORD", "secret")
+        monkeypatch.setenv("POSTGRES_DB", "cab_pipeline")
         s = PostgresSettings()
         assert "host=db.internal" in s.dsn
         assert "port=5433" in s.dsn
