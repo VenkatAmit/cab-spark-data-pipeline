@@ -231,7 +231,7 @@ class GoldLoader:
             ) from exc
 
     def _read_silver_zones(self, spark: SparkSession) -> DataFrame:
-        """Read the full silver_zones table via JDBC (single partition — small table)."""
+        """Read the full silver_zones table via JDBC."""
         try:
             return (
                 spark.read.format("jdbc")
