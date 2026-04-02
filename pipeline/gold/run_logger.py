@@ -64,6 +64,7 @@ ON CONFLICT (run_id, dag_id, task_id) DO UPDATE SET
     metadata         = EXCLUDED.metadata;
 """
 
+
 class RunStatus(StrEnum):
     """Pipeline run status values."""
 
