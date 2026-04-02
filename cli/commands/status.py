@@ -15,7 +15,7 @@ from typing import Annotated
 import typer
 
 from cli.airflow_client import AirflowClient
-from pipeline.exceptions import OrchestratorError
+from cli.exceptions import OrchestratorError
 
 status_app = typer.Typer(help="Show pipeline DAG run status", no_args_is_help=False)
 

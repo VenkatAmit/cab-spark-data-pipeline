@@ -16,7 +16,6 @@ import json
 import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from enum import Enum
 from typing import Any
 
 import psycopg
@@ -64,8 +63,7 @@ ON CONFLICT (run_id, dag_id, task_id) DO UPDATE SET
     metadata         = EXCLUDED.metadata;
 """
 
-
-class RunStatus(str, Enum):
+class RunStatus(StrEnum):
     """Pipeline run status values."""
 
     RUNNING = "running"
