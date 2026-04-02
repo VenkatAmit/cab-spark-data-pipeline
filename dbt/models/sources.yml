@@ -1,8 +1,0 @@
-version: 2
-
-sources:
-  - name: silver
-    database: pipeline_db
-    schema: public
-    tables:
-      - name: cleaned_trips

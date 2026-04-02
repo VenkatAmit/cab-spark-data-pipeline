@@ -132,3 +132,9 @@ ignore_missing_imports = true
 testpaths = ["tests"]
 asyncio_mode = "auto"
 addopts = "-v --tb=short"
+
+#---------------------------------------------------------------------------
+# pipeline
+#---------------------------------------------------------------------------
+[tool.hatch.build.targets.wheel]
+packages = ["pipeline"]
