@@ -54,3 +54,5 @@ dbt/logs/
 logs/
 dbt/.user.yml
 **/.DS_Store
+data/
+data/
