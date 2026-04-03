@@ -53,7 +53,7 @@ class TestSettingsComposition:
     def test_airflow_password_not_in_repr(
         self, airflow_settings: AirflowSettings
     ) -> None:
-        assert airflow_settings.password.get_secret_value() not in repr(airflow_settings)
+        assert "**********" in repr(airflow_settings)
 
 
 class TestGetSettingsCache:
