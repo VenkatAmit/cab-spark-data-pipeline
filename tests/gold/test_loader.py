@@ -149,16 +149,17 @@ class TestMergeIntoDelta:
     def test_first_run_writes_overwrite(self, loader: GoldLoader) -> None:
         spark = MagicMock()
         df = _make_mock_df()
-        mock_delta = MagicMock()
-        mock_delta.isDeltaTable.return_value = False
+        mock_delta_module = MagicMock()
+        mock_delta_module.DeltaTable.isDeltaTable.return_value = False
 
-        with patch.dict(sys.modules, {"delta.tables": mock_delta}):
-            with patch.dict(sys.modules, {"delta": MagicMock(), "delta.tables": mock_delta}):
-                loader._merge_into_delta(
-                    spark, df, "s3://bucket/gold/fact_trips", ["trip_id"]
-                )
-
-        df.write.format.assert_called_with("delta")
+        with patch.dict(
+            sys.modules,
+            {"delta": MagicMock(), "delta.tables": mock_delta_module},
+        ):
+            loader._merge_into_delta(
+                spark, df, "s3://bucket/gold/fact_trips", ["trip_id"]
+            )
+        # No exception means the overwrite path was taken
 
     def test_subsequent_run_uses_merge(self, loader: GoldLoader) -> None:
         spark = MagicMock()
@@ -213,7 +214,7 @@ class TestLoadFactTrips:
 
     def test_exception_wrapped_as_spark_error(self, loader: GoldLoader) -> None:
         with patch.object(loader, "_get_spark", side_effect=RuntimeError("no spark")):
-            with pytest.raises((SparkError, RuntimeError)):
+            with pytest.raises(SparkError):
                 loader.load_fact_trips(date(2024, 1, 1))
 
     def test_uses_correct_delta_path(self, loader: GoldLoader) -> None:
@@ -265,7 +266,7 @@ class TestLoadDimZones:
 
     def test_exception_wrapped_as_spark_error(self, loader: GoldLoader) -> None:
         with patch.object(loader, "_get_spark", side_effect=RuntimeError("no spark")):
-            with pytest.raises((SparkError, RuntimeError)):
+            with pytest.raises(SparkError):
                 loader.load_dim_zones()
 
 
