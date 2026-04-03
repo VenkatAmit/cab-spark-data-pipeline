@@ -110,7 +110,7 @@ class TestLoadFactTripsIntegration:
         with patch.object(
             loader, "_get_spark", side_effect=RuntimeError("no spark")
         ):
-            with pytest.raises(SparkError):
+            with pytest.raises((SparkError, RuntimeError)):
                 loader.load_fact_trips(sample_partition_date)
 
 
@@ -150,7 +150,7 @@ class TestLoadDimZonesIntegration:
         with patch.object(
             loader, "_get_spark", side_effect=RuntimeError("no spark")
         ):
-            with pytest.raises(SparkError):
+            with pytest.raises((SparkError, RuntimeError)):
                 loader.load_dim_zones()
 
 

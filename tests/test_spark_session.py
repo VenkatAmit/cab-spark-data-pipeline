@@ -127,7 +127,7 @@ class TestGetSpark:
         settings = SparkSettings()
         with patch.dict(sys.modules, {"pyspark": None, "pyspark.sql": None}):
             with pytest.raises(ConfigurationError):
-                get_spark(settings=settings)
+                get_spark()
 
     def test_cache_returns_same_instance(self) -> None:
         """get_spark() must return the same object on repeated calls."""
@@ -135,8 +135,8 @@ class TestGetSpark:
         with patch.dict(sys.modules, {"pyspark.sql": mock_sql}):
             with patch("pipeline.spark_session._build_spark_session") as mock_build:
                 mock_build.return_value = _make_mock_spark()
-                a = get_spark(settings=SparkSettings())
-                b = get_spark(settings=SparkSettings())
+                a = get_spark()
+                b = get_spark()
                 assert a is b
                 assert mock_build.call_count == 1
 
@@ -155,10 +155,10 @@ class TestStopSpark:
         with patch.dict(sys.modules, {"pyspark.sql": mock_sql}):
             with patch("pipeline.spark_session._build_spark_session") as mock_build:
                 mock_build.return_value = _make_mock_spark()
-                get_spark(settings=SparkSettings())
+                get_spark()
                 stop_spark()
                 # After stop, a new call should rebuild
-                get_spark(settings=SparkSettings())
+                get_spark()
                 assert mock_build.call_count == 2
 
     def test_stop_without_active_session_is_safe(self) -> None:
