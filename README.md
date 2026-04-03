@@ -1,112 +1,165 @@
 # cab-spark-data-pipeline
 
-## Architecture
-
-![cab-spark-data-pipeline Architecture](docs/assets/architecture.png)
-
-> **Stack:** Airflow 2.8.1 · PySpark 3.4.1 · Delta 2.4.0 · dbt-postgres 1.7.18 · PostgreSQL 15 · Great Expectations 0.17.23 · Docker
-
-
-Production-grade batch data pipeline processing 100M+ NYC taxi trips across 23 months of TLC data (Jan 2024 - Nov 2025).
-
-**Stack:** Apache Airflow · PySpark · Delta Lake · dbt · Great Expectations · PostgreSQL · Docker
+Production-grade batch pipeline processing NYC yellow taxi trip data across a
+Bronze → Silver → Gold medallion architecture.
 
 ## Architecture
 
 ```
 NYC Taxi Parquet (TLC public data)
-        |
-        v
-Airflow DAG (@monthly, catchup=True, max_active_runs=1)
-  ingest           — stream-download TLC parquet -> Delta bronze (idempotent)
-  spark_transform  — PySpark: cast, clean, enrich -> Postgres silver
-  delta_optimize   — OPTIMIZE + VACUUM bronze Delta table
-  dbt_run          — dbt seed + dbt run (6 models) + dbt test (21 tests)
-  gx_validate      — Great Expectations: per-month row counts + null checks
-  load             — write pipeline_run_log observability row
-        |
-        v
-Delta Lake + PostgreSQL (medallion architecture)
-
-  Bronze  — yellow_tripdata       (Delta Lake, partitioned by trip_month)
-  Silver  — cleaned_trips         (Postgres, written by spark_transform)
-  Gold    — dim_date              (Postgres, dbt table model)
-            dim_zone              (Postgres, dbt table model)
-            dim_vendor            (Postgres, dbt table model)
-            fact_trips            (Postgres, dbt table model)
-            agg_hourly_metrics    (Postgres, dbt table model)
-            agg_zone_summary      (Postgres, dbt table model)
-  Meta    — pipeline_run_log      (Postgres, observability)
-  Seed    — taxi_zones            (Postgres, dbt seed — 265 NYC zones)
+        │
+        ▼
+┌─────────────────────────────────────────────────────────┐
+│  Bronze  — psycopg3 COPY into Postgres raw_trips        │
+│            BronzeIngestor + GXValidator                 │
+│            Airflow DAG: bronze_dag (daily, 06:00 UTC)   │
+└─────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────┐
+│  Silver  — dbt incremental models on Postgres           │
+│            stg_trips → silver_trips, silver_zones       │
+│            Airflow: BashOperator runs dbt after bronze  │
+└─────────────────────────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────────────────────┐
+│  Gold    — PySpark JDBC read → Delta Lake MERGE         │
+│            GoldLoader: fact_trips, dim_zones            │
+│            Airflow DAG: gold_dag (daily, 08:00 UTC)     │
+└─────────────────────────────────────────────────────────┘
 ```
 
-## Pipeline Status
-
-![Airflow Backfill Complete](docs/airflow_backfill_complete.png)
-
-*23/23 monthly runs green — Jan 2024 to Nov 2025 backfill complete*
-
-## Quick Start
-
-```bash
-# Start the stack
-docker compose up -d
-
-# The DAG auto-backfills Jan 2024 -> Nov 2025 (23 runs, sequential)
-# No manual triggers needed — open http://localhost:8081 to monitor
-# Login: airflow / airflow
-```
+**Stack:** Python 3.11 · psycopg3 · PySpark 3.4 · Delta Lake 2.4 · dbt-postgres · Great Expectations · Apache Airflow 2.9 · PostgreSQL 15 · Docker
 
 ## Stack Versions
 
 | Component | Version |
-|-----------|----------|
-| Apache Airflow | 2.8.1 |
-| PySpark | 3.4.1 |
-| delta-spark | 2.4.0 |
-| dbt-postgres | 1.7.18 |
-| Great Expectations | 0.17.23 |
+|---|---|
+| Python (workers) | 3.11 |
+| Python (tooling) | 3.14 |
+| Apache Airflow | 2.9.x |
+| PySpark | 3.4.x |
+| delta-spark | 2.4.x |
+| dbt-postgres | 1.7.x |
+| Great Expectations | 0.18.x |
 | PostgreSQL | 15 |
-
-## Data Flow
-
-1. **ingest** — Downloads one month of TLC yellow taxi parquet (~50 MB), casts TimestampNTZ columns to Timestamp, writes to Delta bronze with replaceWhere for idempotency
-2. **spark_transform** — Reads bronze Delta, applies cleaning filters (date, fare, distance, duration, payment type), computes derived columns (trip_duration_min, speed_mph, is_airport_trip, tip_percentage with outlier caps), writes to Postgres cleaned_trips
-3. **delta_optimize** — Runs OPTIMIZE (bin-pack small files) + VACUUM (7-day retention) on the bronze partition
-4. **dbt_run** — Seeds taxi_zones lookup (265 NYC zones), runs 6 gold models (3 dims + fact + 2 aggs), runs 21 schema tests
-5. **gx_validate** — Validates row counts per month against XCom values from upstream tasks, checks nulls and ranges across bronze/silver/gold layers
-6. **load** — Writes one observability row to pipeline_run_log with timing, row counts, and quality results per run
 
 ## Project Structure
 
 ```
-nyc-taxi-pipeline/
-├── airflow/
-│   ├── dags/
-│   │   └── taxi_pipeline.py       # DAG definition
-│   └── tasks/
-│       ├── ingest.py              # Bronze layer
-│       ├── spark_transform.py     # Silver layer
-│       ├── delta_optimize.py      # Delta maintenance
-│       ├── dbt_run.py             # Gold layer
-│       ├── gx_validate.py         # Data quality
-│       └── load.py                # Observability
+cab-spark-data-pipeline/
+├── pipeline/
+│   ├── bronze/
+│   │   ├── ingestor.py      # BronzeIngestor — psycopg3 COPY into Postgres
+│   │   └── validator.py     # GXValidator — Great Expectations SQL datasource
+│   ├── gold/
+│   │   ├── loader.py        # GoldLoader — PySpark JDBC → Delta Lake MERGE
+│   │   └── run_logger.py    # RunLogger — observability to pipeline_runs table
+│   ├── exceptions.py        # Typed exception hierarchy
+│   ├── settings.py          # pydantic-settings config (env vars)
+│   └── spark_session.py     # Singleton SparkSession factory
+├── cli/
+│   ├── airflow_client.py    # httpx wrapper for Airflow REST API
+│   ├── commands/            # run, status, backfill, logs
+│   ├── config.py            # AirflowSettings re-export
+│   ├── exceptions.py        # OrchestratorError re-export
+│   └── main.py              # Typer app entry point (cab pipeline ...)
+├── dags/
+│   ├── bronze_dag.py        # Airflow DAG: ingest + validate
+│   └── gold_dag.py          # Airflow DAG: PySpark gold load
 ├── dbt/
-│   ├── models/gold/               # 6 dbt table models
-│   └── seeds/                     # taxi_zones.csv
-├── sql/
-│   └── create_tables.sql          # Postgres schema
-├── Dockerfile
-└── docker-compose.yml
+│   ├── models/
+│   │   ├── staging/         # stg_trips, stg_zones
+│   │   ├── silver/          # silver_trips (incremental), silver_zones
+│   │   └── gold/            # fact_trips, dim_zone, dim_date, dim_vendor,
+│   │                        # agg_hourly_metrics, agg_zone_summary
+│   ├── seeds/               # taxi_zones.csv (265 NYC zones)
+│   └── tests/               # Custom data tests
+├── docker/
+│   ├── Dockerfile.bronze    # Slim image — psycopg3 + GX, no JVM
+│   └── Dockerfile.gold      # PySpark + Delta Lake + Postgres JDBC jar
+├── tests/                   # 191 tests — unit + integration
+├── .github/workflows/ci.yml # 7-job CI pipeline
+├── docker-compose.yml
+└── pyproject.toml
 ```
 
-## Branches
+## Quick Start
 
-| Branch | Status | What it adds |
-|--------|--------|---------------|
-| feature/core-pipeline | merged | Airflow + Postgres foundation |
-| feature/spark-transform | merged | PySpark transform layer |
-| feature/dbt-models | merged | SQL models + data tests |
-| feature/great-expectations | merged | HTML data quality reports |
-| feature/delta-lake | merged | Delta bronze, star schema gold, catchup backfill |
-| fix/catchup-backfill-jan2024-nov2025 | current | End-to-end stability fixes across all tasks |
+```bash
+# Copy env template and configure
+cp .env.example .env
+
+# Start the full stack
+docker compose up -d
+
+# Airflow UI: http://localhost:8080  (admin / admin)
+# Trigger bronze ingestion for today
+cab pipeline run bronze
+
+# Trigger gold load after bronze succeeds
+cab pipeline run gold
+
+# Or run both in sequence
+cab pipeline run all --date 2024-01-01
+```
+
+## CLI
+
+```bash
+# Install CLI dependencies
+uv sync --extra cli
+
+# Configure credentials
+export AIRFLOW_API_URL=http://localhost:8080
+export AIRFLOW_USERNAME=admin
+export AIRFLOW_PASSWORD=admin
+
+# Commands
+cab health                                         # Check Airflow connectivity
+cab pipeline run bronze --date 2024-01-01 --wait  # Trigger + wait
+cab pipeline run gold   --date 2024-01-01 --wait
+cab pipeline run all    --date 2024-01-01          # Bronze then gold
+cab pipeline status                                # Latest runs for all DAGs
+cab pipeline status --dag bronze_dag --limit 5
+cab pipeline backfill --start 2024-01-01 --end 2024-03-31
+cab pipeline backfill --start 2024-01-01 --end 2024-03-31 --dry-run
+cab pipeline logs --dag bronze_dag --run-id <run_id>
+cab pipeline logs --dag bronze_dag --run-id <run_id> --task ingest_trips --stream
+```
+
+## CI
+
+7 jobs run on every push and pull request:
+
+| Job | What it checks |
+|---|---|
+| Lint | ruff, black, mypy --strict (Python 3.14) |
+| SQL lint | sqlfluff on dbt/models/ |
+| Test | 191 pytest tests (Python 3.11) |
+| DAG integrity | AST syntax + banned import checks |
+| Secret scan | TruffleHog on PR diffs |
+| Docker build (bronze) | Dockerfile.bronze builds cleanly |
+| Docker build (gold) | Dockerfile.gold builds cleanly |
+
+## Environment Variables
+
+| Variable | Description | Required |
+|---|---|---|
+| `POSTGRES_HOST` | Postgres host | Yes |
+| `POSTGRES_PORT` | Postgres port | Yes |
+| `POSTGRES_DB` | Database name | Yes |
+| `POSTGRES_USER` | Database user | Yes |
+| `POSTGRES_PASSWORD` | Database password | Yes |
+| `DELTA_GOLD_BASE_PATH` | Delta Lake base path | Yes |
+| `DELTA_CHECKPOINT_PATH` | Delta checkpoint path | Yes |
+| `AIRFLOW_API_URL` | Airflow webserver URL | Yes |
+| `AIRFLOW_USERNAME` | Airflow basic auth user | Yes |
+| `AIRFLOW_PASSWORD` | Airflow basic auth password | Yes |
+| `SPARK_APP_NAME` | Spark application name | No |
+| `SPARK_MASTER` | Spark master URL | No |
+| `SPARK_EXECUTOR_MEMORY` | Executor memory | No |
+| `SPARK_DRIVER_MEMORY` | Driver memory | No |
+| `SPARK_JDBC_NUM_PARTITIONS` | JDBC read partitions | No |
+| `SPARK_JDBC_FETCH_SIZE` | JDBC fetch size | No |
