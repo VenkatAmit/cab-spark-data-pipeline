@@ -203,7 +203,6 @@ class TripsPositiveAmountExpectation(Expectation):
         )
 
 
-
 class TripsDateRangeExpectation(Expectation):
     """pickup_datetime must fall within the expected partition month."""
 
