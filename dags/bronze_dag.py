@@ -197,8 +197,7 @@ def bronze_dag() -> None:
     test_silver = BashOperator(
         task_id="test_silver_dbt",
         bash_command=(
-            "cd /opt/airflow/dbt "
-            "&& dbt test --select silver.* --profiles-dir ."
+            "cd /opt/airflow/dbt && dbt test --select silver.* --profiles-dir ."
         ),
         retries=0,
     )
