@@ -1,0 +1,34 @@
+# ---------------------------------------------------------------------------
+# Dockerfile.airflow
+#
+# Custom Airflow image with Java (for PySpark), dbt, and pipeline deps.
+# Replaces _PIP_ADDITIONAL_REQUIREMENTS in docker-compose.yml.
+#
+# Build:
+#   docker build -f docker/Dockerfile.airflow -t cab-pipeline-airflow .
+# ---------------------------------------------------------------------------
+
+    FROM apache/airflow:2.9.2-python3.11
+
+    USER root
+
+    # Install Java (required for PySpark) and build deps
+    RUN apt-get update && apt-get install -y --no-install-recommends \
+        openjdk-17-jre-headless \
+        libpq-dev \
+        && rm -rf /var/lib/apt/lists/*
+
+    ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64 \
+        PYSPARK_PYTHON=python3 \
+        SPARK_LOCAL_DIRS=/tmp/spark
+
+    USER airflow
+
+    # Install all pipeline Python dependencies
+    RUN pip install --no-cache-dir \
+        "psycopg[binary]>=3.2" \
+        "pydantic-settings>=2.3" \
+        "great-expectations==0.18.19" \
+        "dbt-postgres==1.7.18" \
+        "pyspark==3.4.4" \
+        "delta-spark==2.4.0"

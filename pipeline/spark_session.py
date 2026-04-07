@@ -49,6 +49,7 @@ _DELTA_MAVEN_COORDS = "io.delta:delta-core_2.12:2.4.0"
 _DELTA_EXTENSION = "io.delta.sql.DeltaSparkSessionExtension"
 _DELTA_CATALOG = "spark.sql.catalog.spark_catalog"
 _DELTA_CATALOG_IMPL = "org.apache.spark.sql.delta.catalog.DeltaCatalog"
+_POSTGRES_MAVEN_COORDS = "org.postgresql:postgresql:42.7.3"
 
 
 def _build_spark_session(settings: SparkSettings) -> SparkSession:
@@ -94,7 +95,7 @@ def _build_spark_session(settings: SparkSettings) -> SparkSession:
             # ----------------------------------------------------------------
             .config(
                 "spark.jars.packages",
-                _DELTA_MAVEN_COORDS,
+                f"{_DELTA_MAVEN_COORDS},{_POSTGRES_MAVEN_COORDS}",
             )
             # ----------------------------------------------------------------
             # Memory

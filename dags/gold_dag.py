@@ -71,9 +71,10 @@ def gold_dag() -> None:
     wait_for_bronze = ExternalTaskSensor(
         task_id="wait_for_bronze",
         external_dag_id="bronze_dag",
-        external_task_id=None,  # wait for the whole DAG
+        external_task_id=None,
         allowed_states=["success"],
         failed_states=["failed"],
+        execution_delta=timedelta(hours=2),  # ← ADD THIS LINE
         timeout=3600,
         poke_interval=60,
         mode="reschedule",
