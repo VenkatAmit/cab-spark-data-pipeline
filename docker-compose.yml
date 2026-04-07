@@ -21,7 +21,11 @@
 
 x-airflow-common:
   &airflow-common
-  image: apache/airflow:2.9.2-python3.11
+  build:
+    context: .
+    dockerfile: docker/Dockerfile.airflow
+  # remove the image: line
+  # remove _PIP_ADDITIONAL_REQUIREMENTS
   environment:
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
@@ -41,8 +45,7 @@ x-airflow-common:
     dbt_project_dir: /opt/airflow/dbt
     #python
     PYTHONPATH: "/opt/airflow"
-    #PIP ADDITIONAL REQUIREMENTS
-    _PIP_ADDITIONAL_REQUIREMENTS: "psycopg[binary]>=3.2 pydantic-settings>=2.3 great-expectations==0.18.19 dbt-postgres==1.7.18"
+
   volumes:
     - ./dags:/opt/airflow/dags
     - ./dbt:/opt/airflow/dbt

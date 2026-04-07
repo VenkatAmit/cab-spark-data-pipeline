@@ -61,7 +61,7 @@ MERGE_KEYS: dict[str, list[str]] = {
 }
 
 #: Postgres silver schema (dbt writes here)
-SILVER_SCHEMA = "silver"
+SILVER_SCHEMA = "public_silver"
 
 
 class GoldLoader:
@@ -316,9 +316,8 @@ class GoldLoader:
     # ------------------------------------------------------------------
 
     def _get_spark(self) -> SparkSession:
-        """Return the active SparkSession, creating it if needed."""
         try:
-            return get_spark(settings=self._spark_cfg)
+            return get_spark()
         except Exception as exc:
             raise SparkError("SparkSession initialisation", cause=exc) from exc
 
