@@ -1,10 +1,16 @@
 # Product Requirements Document
-## NYC Taxi Medallion Data Pipeline
+## Cab Spark Data Pipeline
 
 **Version:** 1.0
 **Date:** March 24, 2026
 **Author:** Venkat Amit Kommineni
-**Status:** In Review
+**Status:** Superseded by implementation
+**As-built specification:** [docs/architecture.md](docs/architecture.md) — divergences explained in [ADRs](adr/)
+
+**Note:** This PRD reflects the original design intent (March 2026).
+> The implemented architecture diverged in several areas during build.
+> For the as-built specification, see [docs/architecture.md](docs/architecture.md).
+> Key divergences are documented in the ADRs.
 
 ---
 
