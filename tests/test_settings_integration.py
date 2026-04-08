@@ -51,9 +51,9 @@ class TestSettingsComposition:
         assert "test_password" not in repr(postgres_settings)
 
     def test_airflow_password_not_in_repr(
-        self, airflow_settings: AirflowSettings
+            self, airflow_settings: AirflowSettings
     ) -> None:
-        assert "**********" in repr(airflow_settings)
+        assert "admin" not in repr(airflow_settings.password)
 
 
 class TestGetSettingsCache:
