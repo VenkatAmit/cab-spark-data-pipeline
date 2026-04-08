@@ -2,8 +2,6 @@
 
 Production-grade batch data pipeline processing **57M+ NYC yellow taxi trips** across 23 months (Jan 2024 – Nov 2025) using a Bronze → Silver → Gold medallion architecture.
 
-[![CI](https://github.com/VenkatAmit/cab-spark-data-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/VenkatAmit/cab-spark-data-pipeline/actions/workflows/ci.yml)
-
 ---
 
 ## Table of contents
